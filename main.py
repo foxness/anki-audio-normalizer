@@ -126,7 +126,7 @@ def get_audio_filter():
         print('You set all filters to false. I\'m ignoring you lol')
         audio_filters = [trimming_filter, normalizing_filter]
     
-    pipe_audio_filters = []
+    pipe_filters = []
     for i, a in enumerate(audio_filters):
         pipe_filter = a
         
@@ -136,9 +136,9 @@ def get_audio_filter():
         if i < len(audio_filters) - 1:
             pipe_filter = pipe_filter + f'[{i + 1}]'
         
-        pipe_audio_filters.append(pipe_filter)
+        pipe_filters.append(pipe_filter)
     
-    audio_filter = ';'.join(pipe_audio_filters)
+    audio_filter = ';'.join(pipe_filters)
     return audio_filter
 
 main()
