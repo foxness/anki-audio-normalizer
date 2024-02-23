@@ -18,7 +18,7 @@ EXTENSIONS = ['.mp3', '.ogg', '.webm', '.wav']
 OUTPUT_DIR = '/your/path/to/outputdir'
 
 # Filters to apply
-TRIM_SILENCE = False
+TRIM_SILENCE = True
 NORMALIZE_LEVELS = True
 
 SHOW_FFMPEG_OUTPUT = False
@@ -91,7 +91,7 @@ def normalize_file(input_file, output_file):
     stderr = None
     if not SHOW_FFMPEG_OUTPUT:
         stdout = subprocess.DEVNULL
-        # stderr = subprocess.DEVNULL
+        stderr = subprocess.DEVNULL
     
     subprocess.run(process_args, stdout=stdout, stderr=stderr)
 
@@ -114,10 +114,22 @@ def get_audio_filter():
         audio_filters.append(normalizing_filter)
     
     if not audio_filters:
-        print('You set both TRIM_SILENCE and NORMALIZE_LEVELS to false. I\'m ignoring you lol')
+        print('You set all filters to false. I\'m ignoring you lol')
         audio_filters = [trimming_filter, normalizing_filter]
     
-    audio_filter = ';'.join(audio_filters)
+    pipe_audio_filters = []
+    for i, a in enumerate(audio_filters):
+        pipe_filter = a
+        
+        if i > 0:
+            pipe_filter = f'[{i}]' + pipe_filter
+        
+        if i < len(audio_filters) - 1:
+            pipe_filter = pipe_filter + f'[{i + 1}]'
+        
+        pipe_audio_filters.append(pipe_filter)
+    
+    audio_filter = ';'.join(pipe_audio_filters)
     return audio_filter
 
 main()
