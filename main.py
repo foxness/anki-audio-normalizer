@@ -12,30 +12,31 @@ from pathlib import Path
 
 # ----- CONFIG START -----
 
-INPUT_DIR = 'test_media'
+INPUT_DIR = '/your/path/to/inputdir'
 EXTENSIONS = ['.mp3', '.ogg', '.webm', '.wav']
 
-OUTPUT_DIR = 'test_output'
+OUTPUT_DIR = '/your/path/to/outputdir'
 
-SHOW_FFMPEG_OUTPUT = True
-# TRIM_BEGINNING_SILENCE = True
+# Filters to apply
+TRIM_SILENCE = False
+NORMALIZE_LEVELS = True
+
+SHOW_FFMPEG_OUTPUT = False
 
 # ----- CONFIG END -----
 
 def main():
     print('hello world')
-    # subprocess.run(['rm', '-rf', 'output']) # todo: remove
+    subprocess.run(['rm', '-rf', OUTPUT_DIR]) # todo: remove
     
     if Path(OUTPUT_DIR).exists():
         print(f'Output folder already exists ({OUTPUT_DIR})')
         return
     
     files = get_files(INPUT_DIR, EXTENSIONS)
-    # files = files[:4]
     print_filecount(files)
     
     output_files = process_files(files, OUTPUT_DIR)
-    normalize_levels(output_files)
 
 def get_files(dir, extensions):
     all_files = [os.path.join(dir, f) for f in os.listdir(dir)]
@@ -61,6 +62,7 @@ def print_filecount(files):
 
 def process_files(files, output_dir):
     Path(output_dir).mkdir(parents=True, exist_ok=False)
+    print(f'normalizing...')
     
     output_filepaths = []
     for i, input_filepath in enumerate(files):
@@ -68,22 +70,20 @@ def process_files(files, output_dir):
         output_filepath = os.path.join(output_dir, filename)
         output_filepaths.append(output_filepath)
         
-        trim_silence(input_filepath, output_filepath) # todo: just copy if not trim
+        normalize_file(input_filepath, output_filepath)
         
         if (i + 1) % 100 == 0:
             print(f'processed {i + 1} files')
     
-    print(f'processing done')
+    print(f'normalizing done')
     return output_filepaths
 
-def trim_silence(input_file, output_file):
-    # trims beginning silence
-    
-    # ffmpeg -i input_file -af silenceremove=1:0:-50dB output_file
+def normalize_file(input_file, output_file):
+    audio_filter = get_audio_filter()
     process_args = [
         'ffmpeg',
         '-i', input_file,
-        '-af', 'silenceremove=1:0:-50dB',
+        '-filter_complex', audio_filter,
         output_file
     ]
     
@@ -91,39 +91,33 @@ def trim_silence(input_file, output_file):
     stderr = None
     if not SHOW_FFMPEG_OUTPUT:
         stdout = subprocess.DEVNULL
-        stderr = subprocess.DEVNULL
+        # stderr = subprocess.DEVNULL
     
     subprocess.run(process_args, stdout=stdout, stderr=stderr)
 
-def normalize_levels(files):
-    list_content = '\n'.join([f"file '{a}'" for a in files])
+def get_audio_filter():
+    # Silence trimming filter
+    # command: ffmpeg -i input_file -af silenceremove=1:0:-50dB output_file
+    trimming_filter = 'silenceremove=1:0:-50dB'
     
-    list_file_name = 'list_file.txt'
-    list_file = open(list_file_name, 'w')
-    list_file.write(list_content)
-    list_file.close()
-    
+    # Level normalizing filter
     # ffmpeg -f concat -safe 0 -i list_file -af loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary -f null -
-    process_args = [
-        'ffmpeg',
-        '-f', 'concat',
-        '-safe', '0',
-        '-i', list_file_name,
-        '-af', 'loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary',
-        '-f', 'null',
-        '-'
-    ]
+    # ffmpeg -i input_file -af loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary output_file
+    # normalizing_filter = 'loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary'
+    normalizing_filter = 'loudnorm=I=-16:LRA=11:TP=-1.5'
     
-    stdout = None
-    stderr = None
-    if not SHOW_FFMPEG_OUTPUT:
-        stdout = subprocess.DEVNULL
-        stderr = subprocess.DEVNULL
+    audio_filters = []
+    if TRIM_SILENCE:
+        audio_filters.append(trimming_filter)
     
-    print(f'normalizing...')
-    subprocess.run(process_args, stdout=stdout, stderr=stderr)
-    print(f'normalization done')
+    if NORMALIZE_LEVELS:
+        audio_filters.append(normalizing_filter)
     
-    subprocess.run(['rm', list_file_name])
+    if not audio_filters:
+        print('You set both TRIM_SILENCE and NORMALIZE_LEVELS to false. I\'m ignoring you lol')
+        audio_filters = [trimming_filter, normalizing_filter]
+    
+    audio_filter = ';'.join(audio_filters)
+    return audio_filter
 
 main()
