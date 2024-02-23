@@ -26,9 +26,6 @@ SHOW_FFMPEG_OUTPUT = False
 # ----- CONFIG END -----
 
 def main():
-    print('hello world')
-    subprocess.run(['rm', '-rf', OUTPUT_DIR]) # todo: remove
-    
     if Path(OUTPUT_DIR).exists():
         print(f'Output folder already exists ({OUTPUT_DIR})')
         return
