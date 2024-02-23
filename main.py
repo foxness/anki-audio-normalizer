@@ -10,6 +10,16 @@ import os
 import subprocess
 from pathlib import Path
 
+# ----- INSTRUCTIONS -----
+# 
+# 1. Back up your Anki decks
+# 2. Copy the collection.media folder from Anki to somewhere else ("the input folder")
+# 3. Run this script on the input folder (adjust config as needed)
+# 4. Copy the contents of the output folder into the input folder, replacing all the files (the output folder only has changed audio)
+# 5. Replace Anki's collection.media folder with the input folder
+# 6. We're done. Run Anki.
+#
+
 # ----- CONFIG START -----
 
 INPUT_DIR = '/your/path/to/inputdir'
@@ -59,7 +69,7 @@ def print_filecount(files):
 
 def process_files(files, output_dir):
     Path(output_dir).mkdir(parents=True, exist_ok=False)
-    print(f'normalizing...')
+    print(f'Normalizing...')
     
     output_filepaths = []
     for i, input_filepath in enumerate(files):
@@ -70,9 +80,9 @@ def process_files(files, output_dir):
         normalize_file(input_filepath, output_filepath)
         
         if (i + 1) % 100 == 0:
-            print(f'processed {i + 1} files')
+            print(f'Processed {i + 1} files')
     
-    print(f'normalizing done')
+    print(f'Normalizing done')
     return output_filepaths
 
 def normalize_file(input_file, output_file):
@@ -94,12 +104,11 @@ def normalize_file(input_file, output_file):
 
 def get_audio_filter():
     # Silence trimming filter
-    # command: ffmpeg -i input_file -af silenceremove=1:0:-50dB output_file
+    # ffmpeg -i input_file -af silenceremove=1:0:-50dB output_file
     trimming_filter = 'silenceremove=1:0:-50dB'
     
     # Level normalizing filter
     # ffmpeg -f concat -safe 0 -i list_file -af loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary -f null -
-    # ffmpeg -i input_file -af loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary output_file
     # normalizing_filter = 'loudnorm=I=-16:LRA=11:TP=-1.5:print_format=summary'
     normalizing_filter = 'loudnorm=I=-16:LRA=11:TP=-1.5'
     
