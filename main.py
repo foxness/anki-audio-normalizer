@@ -4,11 +4,10 @@
 # Created on 2024/02/23 by Haonoke
 # -----
 
-# REQUIREMENTS: ffmpeg installed
-
-import os
-import subprocess
-from pathlib import Path
+# ----- REQUIREMENTS -----
+#
+# - ffmpeg installed on your system
+#
 
 # ----- INSTRUCTIONS -----
 # 
@@ -19,6 +18,10 @@ from pathlib import Path
 # 5. Replace Anki's collection.media folder with the input folder
 # 6. We're done. Run Anki.
 #
+
+import os
+import subprocess
+from pathlib import Path
 
 # ----- CONFIG START -----
 
